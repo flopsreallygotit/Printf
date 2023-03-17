@@ -19,40 +19,27 @@ _start:     mov rsi, Specificator
 
 section .rodata
 
-; .align 8
-; .jump_table:
-; .quad .binary
-; .quad .char
-; .quad .decimal
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .octal
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .string
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .default
-; .quad .hex
+jump_table:             dq __binary
+                        dq __char
+                        dq __decimal
+
+times ('o' - 'd' - 1)   dq __error
+
+                        dq __octal
+
+times ('s' - 'o' - 1)   dq __error
+
+                        dq __string
+
+times ('x' - 's' - 1)   dq __error
+
+                        dq __hex
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 section .data
 
-Specificator: db '%%ab%%o%%ba%%', 10, 0
-
-; DEBUG_MESSAGE: db "HERE!", 10
-; DEBUG_LENGTH:  equ $ - DEBUG_MESSAGE
+Specificator: db 'aboba%% %b', 10, 0
 
 Buffer: db 20 dup(48)
-BufferLength:  equ $ - Buffer
+BufferLength:   equ $ - Buffer

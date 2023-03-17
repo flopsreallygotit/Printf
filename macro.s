@@ -43,10 +43,10 @@
     mov rdx, %2
     syscall
 
-    push rdx
-    push rsi
-    push rdi
-    push rax   
+    pop rdx
+    pop rsi
+    pop rdi
+    pop rax   
 %endmacro
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

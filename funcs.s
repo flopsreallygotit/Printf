@@ -37,6 +37,7 @@ _printf:        push rsi
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 _hndl_spfr:     inc rsi
+                mov al, [rsi]
 
                 cmp al, 37  ; '%'
                 jne .handle
@@ -44,8 +45,39 @@ _hndl_spfr:     inc rsi
                 PUTCHAR
                 jmp .end
 
-.handle:        
+.handle:        cmp al, 0
+                je _printf.end        
+
+                cmp al, 'b'
+                jb __error
+
+                cmp al, 'x'
+                ja __error
+
+                mov rax, [jump_table + (rax - 'b') * 8]
+                jmp rax
 
 .end:           inc rsi
                 jmp _printf.next
                 ret
+
+__binary:       
+                jmp _hndl_spfr.end
+
+__char:         
+                jmp _hndl_spfr.end
+
+__decimal:      
+                jmp _hndl_spfr.end
+
+__octal:        
+                jmp _hndl_spfr.end
+
+__string:       
+                jmp _hndl_spfr.end
+
+__hex:          
+                jmp _hndl_spfr.end
+
+__error:        
+                jmp _hndl_spfr.end

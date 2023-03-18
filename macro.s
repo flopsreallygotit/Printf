@@ -22,7 +22,9 @@
 %endmacro
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; Entry:    AL = Char
+; Outputs char to console
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Entry:    [RSI] = Char to output
 ; Exit:     None
 ; Destroys: None
 ; Expects:  None
@@ -46,6 +48,8 @@
     nop
 %endmacro
 
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Writes string to console 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Entry:    String, String length
 ; Exit:     None
@@ -86,7 +90,7 @@
 
     mov rax, 60
     mov rdi, %1
-    
+
     syscall
 
     nop

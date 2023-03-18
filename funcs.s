@@ -79,5 +79,46 @@ __string:
 __hex:          
                 jmp _hndl_spfr.end
 
-__error:        
+__error:        WRITE Error, ErrorLength
                 jmp _hndl_spfr.end
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Entry:    RSI = Address of 0-terminated string
+; Exit:     None
+; Destroys: None
+; Expects:  None
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+__reverse_print:    push rsi
+                    push rcx
+                    push ax
+
+                    xor rcx, rcx
+
+.next1:             mov al, [rsi]
+
+                    cmp al, 0
+                    je .end1
+
+                    inc rcx
+                    inc rsi
+                    jmp .next1
+
+.end1:              dec rsi
+
+.next2:             cmp rcx, 0
+                    je .end2
+
+                    mov al, [rsi]
+
+                    PUTCHAR
+
+                    dec rcx
+                    dec rsi
+                    jmp .next2
+                    
+.end2:              pop ax
+                    pop rcx
+                    pop rsi
+
+    ret

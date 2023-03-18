@@ -6,8 +6,11 @@ global _start
 
 section .text
 
-_start:     mov rsi, Specificator
-            call _printf
+_start:     ; mov rsi, Specificator
+            ; call _printf
+
+            mov rsi, String
+            call __reverse_print
 
             EXIT 0
 
@@ -39,7 +42,9 @@ times ('x' - 's' - 1)   dq __error
 
 section .data
 
-Specificator: db 'aboba%% %b', 10, 0
+Specificator:   db 'aboba%% %b', 10, 0
 
-Buffer: db 20 dup(48)
-BufferLength:   equ $ - Buffer
+String:         db '12345', 0
+
+Error:          db '~~~ERROR~~~'
+ErrorLength:    equ $ - Error

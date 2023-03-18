@@ -1,4 +1,27 @@
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Saves RAX, RCX, R11 and calls system
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Entry:    None
+; Exit:     None
+; Destroys: None
+; Expects:  None
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+%macro SAVE_SYSTEMCALL 0
+    nop
+    push rax
+    push rcx
+    push r11
+
+    syscall
+
+    pop  r11
+    pop  rcx
+    pop  rax
+    nop
+%endmacro
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Entry:    AL = Char
 ; Exit:     None
 ; Destroys: None
@@ -6,22 +29,21 @@
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 %macro PUTCHAR 0
+    nop
     push rdi
-    push rsi
     push rdx
-    ; push r11
-    ; push rcx
+    push rax
 
     mov rax, 1
     mov rdi, 1
     mov rdx, 1
-    syscall
 
-    ; pop rcx
-    ; pop r11
-    pop rdx
-    pop rsi
-    pop rdi 
+    SAVE_SYSTEMCALL
+
+    pop  rax
+    pop  rdx
+    pop  rdi 
+    nop
 %endmacro
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -32,6 +54,7 @@
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 %macro WRITE 2
+    nop
     push rax
     push rdi
     push rsi
@@ -41,12 +64,14 @@
     mov rdi, 1
     mov rsi, %1
     mov rdx, %2
-    syscall
 
-    pop rdx
-    pop rsi
-    pop rdi
-    pop rax   
+    SAVE_SYSTEMCALL
+
+    pop  rdx
+    pop  rsi
+    pop  rdi
+    pop  rax   
+    nop
 %endmacro
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -57,7 +82,12 @@
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 %macro EXIT 1
+    nop
+
     mov rax, 60
     mov rdi, %1
+    
     syscall
+
+    nop
 %endmacro

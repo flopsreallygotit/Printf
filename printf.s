@@ -25,6 +25,19 @@ times ('x' - 's' - 1)   dq __error
                         dq __hex
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;~~~Buffers~~~
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Buffer: times 32 db 48
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;~~~Error Message~~~
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Error:          db '~~~ERROR~~~'
+ErrorLength:    equ $ - Error
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;~~~Test Data~~~
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -32,12 +45,13 @@ Specificator:   db 'aboba%% %b', 10, 0
 
 String:         db '12345', 0
 
-Error:          db '~~~ERROR~~~'
-ErrorLength:    equ $ - Error
-
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 section .text
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;~~~Main function~~~
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; C stdlib.h type printf() with %o, %x, %b, %d, %c, %s specificators
@@ -67,12 +81,12 @@ _printf:        push r9         ;\
 
                 pop rbp         ; Restoring base pointer.
 
-                pop rdi         ;\
-                pop rsi         ;|
-                pop rdx         ;|
-                pop rcx         ;+------> Restoring regs with arguments.
-                pop r8          ;|
-                pop r9          ;/
+                pop  rdi        ;\
+                pop  rsi        ;|
+                pop  rdx        ;|
+                pop  rcx        ;+------> Restoring regs with arguments.
+                pop  r8         ;|
+                pop  r9         ;/
 
                 ret
 
@@ -86,23 +100,22 @@ _printf:        push r9         ;\
 ; Expects:  None
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-__printf:       push ax
+__printf:       push rax            ; Saving RAX
 
-.next:          mov al, [rsi]
+.next:          mov al, [rsi]       ; Putting current template string symbol to AL.
 
-                cmp al, 0
+                cmp al, 0           ; If AL == 0 then it's end of template string.
                 je .end
 
-                cmp al, 37  ; '%'
+                cmp al, 37  ; '%'   ; If current symbol is % then it's specificator.
                 je _hndl_spfr
 
-                PUTCHAR
+                PUTCHAR             ; If it's ordinary symbol then output it.
 
-                inc rsi
+                inc rsi             ; Moving to address of next symbol.
                 jmp .next
 
-.end:           pop ax
-
+.end:           pop  rax
                 ret
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -110,43 +123,64 @@ __printf:       push ax
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Entry:    RSI = Address of specificator
 ; Exit:     RSI = Address of first symbol after specificator
-; Destroys: None
-; Expects:  None
+; Destroys: RAX
+; Expects:  Labels __printf.end and __printf.next
+;           Function __error
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-_hndl_spfr:     inc rsi
-                mov al, [rsi]
+_hndl_spfr:     inc rsi             ; Moving to letter address.
+                mov al, [rsi]       ; Putting current symbol to AL.
 
-                cmp al, 37  ; '%'
+                cmp al, '%'
                 jne .handle
 
-                PUTCHAR
+                PUTCHAR             ; '%%' -> '%' at output.
                 jmp .end
 
 .handle:        cmp al, 0
                 je __printf.end        
 
-                cmp al, 'b'
-                jb __error
+                cmp al, 'b'         ;\
+                jb __error          ;|
+                                    ;+------> Checking that letter is in range 'b' - 'x'.
+                cmp al, 'x'         ;|
+                ja __error          ;/
 
-                cmp al, 'x'
-                ja __error
-
-                mov rax, [jump_table + (rax - 'b') * 8]
+                mov rax, [jump_table + (rax - 'b') * 8] ; Jumping to function that handles that letter.
                 jmp rax
 
 .end:           inc rsi
+
                 jmp __printf.next
-                ret
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;~~~Specificators~~~
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-__binary:       
+__binary:       ; TODO
                 jmp _hndl_spfr.end
 
-__char:         
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Writes char to output
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Entry:    Char in stack
+; Exit:     None
+; Destroys: RAX
+; Expects:  Memory buffer 'Buffer' (1 byte at least)
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+__char:         push rsi
+
+                mov rax, [rbp]  ; Popping out current argument.
+                add rbp, 8      ; Moving base pointer to next argument.
+
+                mov rsi, Buffer	
+                mov byte [rsi], al
+
+                PUTCHAR
+
+                pop  rsi
+
                 jmp _hndl_spfr.end
 
 __decimal:      
@@ -155,11 +189,46 @@ __decimal:
 __octal:        
                 jmp _hndl_spfr.end
 
-__string:       
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Writes string to output
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Entry:    String address in stack
+; Exit:     None
+; Destroys: RAX
+; Expects:  None
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+__string:       push rsi
+
+                mov rsi, [rbp]
+                add rbp, 8
+
+.next:          mov al, [rsi]
+                cmp al, 0
+                je .end
+
+                PUTCHAR
+
+                inc rsi
+                jmp .next
+
+.end:           pop rsi
+
                 jmp _hndl_spfr.end
 
 __hex:          
                 jmp _hndl_spfr.end
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Writes error to output.
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Entry:    None
+; Exit:     None
+; Destroys: None
+; Expects:  Error message string 'Error'
+;           Message length constant 'ErrorLength'
+;           Label _hndl_spfr.end
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 __error:        WRITE Error, ErrorLength
                 jmp _hndl_spfr.end

@@ -9,10 +9,14 @@ all:
 	@echo "Linking files;"
 	@gcc -no-pie main.o printf.o -o main
 
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .PHONY: clear
 clear:
 	@echo "Clearing object files;";
 	@rm -rf *.o
+
+#~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .PHONY: fclear
 fclear:

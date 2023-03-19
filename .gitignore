@@ -1,2 +1,4 @@
 *.lst
 *.o
+test.s
+test

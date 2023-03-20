@@ -1,13 +1,13 @@
 .PHONY: all
 all:
 	@echo "Compiling C file;"
-	@gcc -c main.cpp -o main.o
+	@g++ -c main.cpp -o main.o -O0
 
 	@echo "Compiling Assembler file;"
 	@nasm -f elf64 -l printf.lst -o printf.o -g printf.s
 
 	@echo "Linking files;"
-	@gcc -no-pie main.o printf.o -o main
+	@g++ -no-pie main.o printf.o -o main
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

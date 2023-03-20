@@ -1,8 +1,6 @@
-%include 'macro.s'
-
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-section .data
+section .rodata
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;~~~Jump Table~~~
@@ -11,7 +9,7 @@ section .data
 jump_table:             dq __binary
                         dq __char
                         dq __decimal
-
+_printf("%s %b %d %o%%\n ABOBA_BEBRA \n", "Egorik", 0b1010, 1010, 8);
 times ('o' - 'd' - 1)   dq __error
 
                         dq __octal
@@ -23,6 +21,8 @@ times ('s' - 'o' - 1)   dq __error
 times ('x' - 's' - 1)   dq __error
 
                         dq __hex
+
+section .data
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;~~~Buffer~~~
@@ -57,7 +57,9 @@ section .text
 
 global _printf
 
-_printf:        push r9         ;\			
+_printf:        pop r10
+
+                push r9         ;\			
                 push r8         ;|
                 push rcx        ;+------> First six arguments are in these regs 
                 push rdx        ;|        and other are in stack. So we push them
@@ -81,6 +83,10 @@ _printf:        push r9         ;\
                 pop  r8         ;|
                 pop  r9         ;/
 
+                add rsp, 8 * 6
+
+                push r10
+
                 ret
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -89,27 +95,26 @@ _printf:        push r9         ;\
 ; Entry:    RSI = Specificator string
 ;           Arguments in stack
 ; Exit:     None
-; Destroys: None
+; Destroys: RAX
 ; Expects:  None
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-__printf:       push rax            ; Saving RAX
+__printf:
 
 .next:          mov al, [rsi]       ; Putting current template string symbol to AL
 
                 cmp al, 0           ; If AL == 0 then it's end of template string
                 je .end
 
-                cmp al, 37  ; '%'   ; If current symbol is % then it's specificator
+                cmp al, '%'         ; If current symbol is % then it's specificator
                 je _hndl_spfr
 
-                PUTCHAR             ; If it's ordinary symbol then output it
+                call PutChar            ; If it's ordinary symbol then output it
 
                 inc rsi             ; Moving to address of next symbol
                 jmp .next
 
-.end:           pop  rax
-                ret
+.end:           ret
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ; Processes specificator
@@ -127,7 +132,7 @@ _hndl_spfr:     inc rsi             ; Moving to letter address
                 cmp al, '%'
                 jne .handle
 
-                PUTCHAR             ; '%%' -> '%' at output
+                call PutChar             ; '%%' -> '%' at output
                 jmp .end
 
 .handle:        cmp al, 0
@@ -184,7 +189,7 @@ __char:         mov rax, [rbp]  ; Popping out current argument
                 mov rsi, Buffer	
                 mov byte [rsi], al
 
-                PUTCHAR
+                call PutChar
 
                 pop  rsi
 
@@ -242,7 +247,7 @@ __string:       push rsi
                 cmp al, 0
                 je .end
 
-                PUTCHAR
+                call PutChar
 
                 inc rsi
                 jmp .next
@@ -250,6 +255,15 @@ __string:       push rsi
 .end:           pop rsi
 
                 jmp _hndl_spfr.end
+
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Writes hex to output
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Entry:    Number in stack
+; Exit:     None
+; Destroys: RAX, RBX
+; Expects:  None
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 __hex:          mov rax, [rbp]  ; Popping out current argument
                 add rbp, 8      ; Moving base pointer to next argument
@@ -270,7 +284,14 @@ __hex:          mov rax, [rbp]  ; Popping out current argument
 ;           Label _hndl_spfr.end
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-__error:        WRITE Error, ErrorLength
+__error:        push rsi
+
+                mov rsi, Error
+                mov rdx, ErrorLength
+                call Puts
+
+                pop  rsi
+
                 jmp _hndl_spfr.end
 
 ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -311,7 +332,7 @@ Itoa:       push rsi
 
             inc rsi
 
-.next:      PUTCHAR
+.next:      call PutChar
 
             inc rsi
             dec rcx
@@ -323,43 +344,47 @@ Itoa:       push rsi
 
             ret     
 
-; ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-; ; Entry:    RSI = Address of 0-terminated string
-; ; Exit:     None
-; ; Destroys: None
-; ; Expects:  None
-; ;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Outputs char to a console
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Entry:    RSI = Address of string
+; Exit:     None
+; Destroys: RSI, RDX, RAX
+; Expects:  None
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-; __reverse_print:    push rsi
-;                     push rcx
-;                     push ax
+PutChar:        push rcx
+                push r11
 
-;                     xor rcx, rcx
+                mov rax, 1
+                mov rdi, 1
+                mov rdx, 1
 
-; .next1:             mov al, [rsi]
+                syscall
 
-;                     cmp al, 0
-;                     je .end1
+                pop  r11
+                pop  rcx
 
-;                     inc rcx
-;                     inc rsi
-;                     jmp .next1
+                ret
 
-; .end1:              dec rsi
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Outputs char to a console
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+; Entry:    RSI = Address of string, RDX = Length of string
+; Exit:     None
+; Destroys: RDI, RAX
+; Expects:  None
+;~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-; .next2:             cmp rcx, 0
-;                     je .end2
+Puts:       push rcx
+            push r11
 
-;                     mov al, [rsi]
+            mov rax, 1
+            mov rdi, 1
 
-;                     PUTCHAR
+            syscall
 
-;                     dec rcx
-;                     dec rsi
-;                     jmp .next2
-                    
-; .end2:              pop ax
-;                     pop rcx
-;                     pop rsi
+            pop  r11
+            pop  rcx
 
-;     ret
+            ret

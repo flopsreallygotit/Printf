@@ -9,7 +9,6 @@ section .rodata
 jump_table:             dq __binary
                         dq __char
                         dq __decimal
-_printf("%s %b %d %o%%\n ABOBA_BEBRA \n", "Egorik", 0b1010, 1010, 8);
 times ('o' - 'd' - 1)   dq __error
 
                         dq __octal
@@ -74,7 +73,7 @@ _printf:        pop r10
 
                 call __printf   ; Calling main function
 
-                pop rbp         ; Restoring base pointer
+                pop  rbp        ; Restoring base pointer
 
                 pop  rdi        ;\
                 pop  rsi        ;|
@@ -82,8 +81,6 @@ _printf:        pop r10
                 pop  rcx        ;+------> Restoring regs with arguments
                 pop  r8         ;|
                 pop  r9         ;/
-
-                add rsp, 8 * 6
 
                 push r10
 

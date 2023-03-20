@@ -2,12 +2,10 @@ extern void _printf(const char *str, ...);
 
 int main()
 {
-    // _printf("%s %b %d %o%%\n ABOBA_BEBRA \n", "Egorik", 0b1010, 1010, 8);
-    // _printf("%s %b %d %o%%\n ABOBA_BEBRA \n", "Egorik", 0b1010, 1010, 8);
+    _printf("HI, DED32!\n");
+    _printf("I am %s!\n", "Printf32");
 
-    _printf("%s %b %d %o%%\n ABOBA_BEBRA %c\n", "Egorik", 0b1010, 1010, 8, 'u');
-
-    // TODO more than 5 args
+    _printf("%c %s %d is %b, %o and even %x, and I %s %x %d %% %c%b\n", 'I', "exactly know that", 3802, 3802, 3802, 3802, "love", 3802, 100, 33, 127);
 
     return 0;
 }
